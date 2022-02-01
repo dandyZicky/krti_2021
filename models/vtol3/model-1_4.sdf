@@ -1,0 +1,14 @@
+<?xml version="1.0" ?><sdf version="1.4">
+  <model name="VTOL3">
+    <static>true</static>
+    <link name="link">
+      <visual name="visual">
+        <geometry>
+          <mesh>
+            <uri>model://vtol3/meshes/VTOL3.dae</uri>
+          <scale>0.96 0.96 0.96</scale></mesh>
+        </geometry>
+      </visual>
+    </link>
+  </model>
+</sdf>
