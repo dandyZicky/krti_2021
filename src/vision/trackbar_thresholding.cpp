@@ -41,7 +41,8 @@ static void on_high_V_thresh_trackbar(int, void *)
 }
 int main(int argc, char* argv[])
 {
-    VideoCapture cap(argc > 1 ? atoi(argv[1]) : 0);
+    VideoCapture cap("/dev/video2");
+    // VideoCapture cap(argc > 1 ? atoi(argv[1]) : 0);
     namedWindow(window_capture_name);
     namedWindow(window_detection_name);
     // Trackbars to set thresholds for HSV values
