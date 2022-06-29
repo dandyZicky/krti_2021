@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.0.2)
 project(krti_2021)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
-
+add_compile_options(-std=c++17)
+set(CMAKE_BUILD_TYPE Release)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -11,15 +11,17 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   roscpp
   std_msgs
-  cv_bridge
-  image_transport
+  # cv_bridge
+  # image_transport
+  geometry_msgs
+  mavros_msgs
 )
 
 find_package(OpenCV REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS
-  CATKIN_DEPENDS rospy roscpp std_msgs cv_bridge image_transport
+  CATKIN_DEPENDS rospy roscpp std_msgs geometry_msgs mavros_msgs
 )
 
 ###########
@@ -28,16 +30,15 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
+include_directories(include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${HOME}/catkin_ws/devel/include
+  ${HOME}/catkin_ws/src/krti_2021/include
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/krti_2021.cpp
-# )
+add_library(control src/control.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -47,8 +48,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(trackbar_thresholding src/vision/trackbar_thresholding.cpp)
-add_executable(target_detection src/vision/target_detection.cpp)
+# add_executable(trackbar_thresholding src/vision/trackbar_thresholding.cpp)
+# add_executable(target_detection src/vision/target_detection.cpp)
+add_executable(control_node src/control_node.cpp src/control.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -61,13 +63,15 @@ add_executable(target_detection src/vision/target_detection.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(trackbar_thresholding
-  ${catkin_LIBRARIES}
-)
+# target_link_libraries(trackbar_thresholding
+#   ${catkin_LIBRARIES}
+# )
 
-target_link_libraries(target_detection
-  ${catkin_LIBRARIES}
-)
+# target_link_libraries(target_detection
+#   ${catkin_LIBRARIES}
+# )
+
+target_link_libraries(control_node control ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -98,11 +102,11 @@ target_link_libraries(target_detection
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/controller/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
