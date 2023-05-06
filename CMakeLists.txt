@@ -38,7 +38,7 @@ include_directories(include
 )
 
 ## Declare a C++ library
-add_library(control src/control.cpp)
+add_library(control_sim src/control.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -50,7 +50,7 @@ add_library(control src/control.cpp)
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(trackbar_thresholding src/vision/trackbar_thresholding.cpp)
 # add_executable(target_detection src/vision/target_detection.cpp)
-add_executable(control_node src/control_node.cpp src/control.cpp)
+add_executable(control_node_sim src/control_node.cpp src/control.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -71,7 +71,7 @@ add_executable(control_node src/control_node.cpp src/control.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(control_node control ${catkin_LIBRARIES})
+target_link_libraries(control_node_sim control_sim ${catkin_LIBRARIES})
 
 #############
 ## Install ##

@@ -1,0 +1,5 @@
+*.pyc
+*.tlog
+*.swp
+*.bin
+*.raw

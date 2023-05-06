@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 <sdf version='1.7'>
   <world name='default'>
     <physics type="ode">
@@ -23,7 +23,7 @@
       <background>0.7 0.7 0.7 1</background>
       <shadows>1</shadows>
     </scene>
-    <wind/>
+    <wind />
     <spherical_coordinates>
       <surface_model>EARTH_WGS84</surface_model>
       <latitude_deg>0</latitude_deg>
@@ -743,7 +743,7 @@
             </mesh>
           </geometry>
           <material>
-            <shader type='pixel'/>
+            <shader type='pixel' />
           </material>
           <pose>0 0 0 0 -0 0</pose>
           <transparency>0</transparency>
@@ -1122,7 +1122,7 @@
               <length>0.025</length>
             </cylinder>
           </geometry>
-           <material>
+          <material>
             <script>
               <uri>file://media/materials/scripts/gazebo.material</uri>
               <name>Gazebo/Grey</name>
@@ -1147,23 +1147,23 @@
           <update_rate>29</update_rate>
           <visualize>true</visualize>
 
-         <!--  <plugin name="irlock" filename="libArduCopterIRLockPlugin.so">
+          <!--  <plugin name="irlock" filename="libArduCopterIRLockPlugin.so">
               <fiducial>irlock_beacon_01</fiducial>
           </plugin> -->
           <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-          <alwaysOn>true</alwaysOn>
-          <updateRate>0.0</updateRate>
-          <cameraName>webcam</cameraName>
-          <imageTopicName>image_raw</imageTopicName>
-          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-          <frameName>camera_link</frameName>
-          <hackBaseline>0.07</hackBaseline>
-          <distortionK1>0.0</distortionK1>
-          <distortionK2>0.0</distortionK2>
-          <distortionK3>0.0</distortionK3>
-          <distortionT1>0.0</distortionT1>
-          <distortionT2>0.0</distortionT2>
-      </plugin>
+            <alwaysOn>true</alwaysOn>
+            <updateRate>0.0</updateRate>
+            <cameraName>webcam</cameraName>
+            <imageTopicName>image_raw</imageTopicName>
+            <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+            <frameName>camera_link</frameName>
+            <hackBaseline>0.07</hackBaseline>
+            <distortionK1>0.0</distortionK1>
+            <distortionK2>0.0</distortionK2>
+            <distortionK3>0.0</distortionK3>
+            <distortionT1>0.0</distortionT1>
+            <distortionT2>0.0</distortionT2>
+          </plugin>
 
         </sensor>
 
@@ -1191,7 +1191,7 @@
               <length>0.025</length>
             </cylinder>
           </geometry>
-           <material>
+          <material>
             <script>
               <uri>file://media/materials/scripts/gazebo.material</uri>
               <name>Gazebo/Grey</name>
@@ -1216,23 +1216,23 @@
           <update_rate>29</update_rate>
           <visualize>true</visualize>
 
-         <!--  <plugin name="irlock" filename="libArduCopterIRLockPlugin.so">
+          <!--  <plugin name="irlock" filename="libArduCopterIRLockPlugin.so">
               <fiducial>irlock_beacon_01</fiducial>
           </plugin> -->
           <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-          <alwaysOn>true</alwaysOn>
-          <updateRate>0.0</updateRate>
-          <cameraName>webcam2</cameraName>
-          <imageTopicName>image_raw2</imageTopicName>
-          <cameraInfoTopicName>camera_info2</cameraInfoTopicName>
-          <frameName>camera_link2</frameName>
-          <hackBaseline>0.07</hackBaseline>
-          <distortionK1>0.0</distortionK1>
-          <distortionK2>0.0</distortionK2>
-          <distortionK3>0.0</distortionK3>
-          <distortionT1>0.0</distortionT1>
-          <distortionT2>0.0</distortionT2>
-      </plugin>
+            <alwaysOn>true</alwaysOn>
+            <updateRate>0.0</updateRate>
+            <cameraName>webcam2</cameraName>
+            <imageTopicName>image_raw2</imageTopicName>
+            <cameraInfoTopicName>camera_info2</cameraInfoTopicName>
+            <frameName>camera_link2</frameName>
+            <hackBaseline>0.07</hackBaseline>
+            <distortionK1>0.0</distortionK1>
+            <distortionK2>0.0</distortionK2>
+            <distortionK3>0.0</distortionK3>
+            <distortionT1>0.0</distortionT1>
+            <distortionT2>0.0</distortionT2>
+          </plugin>
 
         </sensor>
 
@@ -1266,7 +1266,6 @@
           <use_parent_model_frame>true</use_parent_model_frame>
         </axis>
       </joint>
-
 
 
     </model>

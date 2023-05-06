@@ -4,100 +4,49 @@ import imagezmq
 import rospy
 import cv2
 import time
-import numpy as np
-from datetime import datetime
 import imagezmq
 import simplejpeg
 import socket
-import os
-import sys
-from imutils.video import WebcamVideoStream
 
-
-from mavros_msgs.msg import State, WaypointReached, PositionTarget
+from mavros_msgs.msg import State, WaypointReached
 from geometry_msgs.msg import PoseStamped, Pose, TwistStamped, Vector3
 from std_msgs.msg import Bool, Float64, Int32, Header
 from cv_bridge import CvBridge
 
-sys.path.append(os.path.join(os.path.dirname(sys.path[0]), 'mechanism'))
-from camera_initialize import init_camera
 from ellipse_detector import detect_max_ellipse
 from preprocessing import mask_img
 from dropzone_detector import get_dropzone
 
-# MISI = 4
 
-# WP FOR GEDUNG B
-WP_DROP_B = 2
-IS_DROP_B_BEHIND = False
-DELTA_CENTERING_B = 0.55
+
 RECORD_PORT_EFFECT = False
-ENCODED_FPS = 30
-LOOP_RATE = 30
+ENCODED_FPS = 26
+LOOP_RATE = 60
 LIVE_STREAMING = True
-# STREAMING_RECEIVER_IP = 'tcp://192.168.1.98:5555'
-STREAMING_RECEIVER_IP = 'tcp://127.0.0.1:5555'
-JPEG_QUALITY = 50
-# RED DROPZONE COLOR RANGE
-BLUR_KERNEL_WIDTH = 7
-# LOW_H1 = 75
-# HIGH_H1 = 179
-# LOW_H2 = 168
-# HIGH_H2 = 185
-# LOW_S1 = 255
-# HIGH_S1 = 255
-# LOW_S2 = 255
-# HIGH_S2 = 255
-# LOW_V1 = 175
-# HIGH_V1 = 208
-# LOW_V2 = 175
-# HIGH_V2 = 220
-OPENING_KERNEL_WIDTH = 1
-OPENING_APPLICATION_COUNT = 0
-CLOSING_KERNEL_WIDTH = 1
-CLOSING_APPLICATION_COUNT = 0
-# Centering Constant for dropping
-# CENTER_X_DROP1 = 396
-# CENTER_Y_DROP1 = 200
+STREAMING_RECEIVER_IP = 'tcp://*:5555'
+JPEG_QUALITY = 30
 
-# CENTER_X_DROP2 = 426
-# CENTER_Y_DROP2 = 200
 
-# CENTER_X_DROP3 = 456
-# CENTER_Y_DROP3 = 200
+# Centering Constant for dropping and picking
+CENTER_X_DROP = 320
+CENTER_Y_DROP = 240
 
-# Constant for centering (landing)
+# Centering Constant for landing
 CENTER_X = 320
-CENTER_Y = 240           
-CENTERING_LIMIT = 200
+CENTER_Y = 240
 
+CENTERING_LIMIT_DROP = 120
 
 def drawPlus(img,x,y,len,color):
     cv2.line(img,(x, y-len),(x, y+len), color, 2)
     cv2.line(img,(x-len, y),(x+len, y), color, 2)
 
-# def servo(misi):
-#     if misi == 1:
-#         return ('1', '2', '3', CENTER_X_DROP1, CENTER_Y_DROP1, CENTER_X_DROP2, CENTER_Y_DROP2, CENTER_X_DROP3, CENTER_Y_DROP3)
-#     elif misi == 2:
-#         return ('1', '3', '2', CENTER_X_DROP1, CENTER_Y_DROP1, CENTER_X_DROP3, CENTER_Y_DROP3, CENTER_X_DROP2, CENTER_Y_DROP2)
-#     elif misi == 3:
-#         return ('2', '1', '3', CENTER_X_DROP2, CENTER_Y_DROP2, CENTER_X_DROP1, CENTER_Y_DROP1, CENTER_X_DROP3, CENTER_Y_DROP3)
-#     elif misi == 4:
-#         return ('2', '3', '1', CENTER_X_DROP2, CENTER_Y_DROP2, CENTER_X_DROP3, CENTER_Y_DROP3, CENTER_X_DROP1, CENTER_Y_DROP1)
-#     elif misi == 5:
-#         return ('3', '1', '2', CENTER_X_DROP3, CENTER_Y_DROP3, CENTER_X_DROP1, CENTER_Y_DROP1, CENTER_X_DROP2, CENTER_Y_DROP2)
-#     elif misi == 6:
-#         return ('3', '2', '1', CENTER_X_DROP3, CENTER_Y_DROP3, CENTER_X_DROP2, CENTER_Y_DROP2, CENTER_X_DROP1, CENTER_Y_DROP1)
-#     else:
-#         return 0 
-
         
 if __name__ == "__main__":
+
+    
     rospy.init_node("vision_node",anonymous=True)
     rospy.loginfo("Vision Node created")
-    # urutan = servo(MISI)
-    time.sleep(0.5)
 
     br = CvBridge()
     img = None
@@ -110,7 +59,6 @@ if __name__ == "__main__":
     rate = rospy.Rate(LOOP_RATE)
     
     rpi_name = socket.gethostname() # send RPi hostname with each image
-    rospy.loginfo(rpi_name)
 
     # initialize camera channel
     try:
@@ -119,13 +67,9 @@ if __name__ == "__main__":
     except TypeError:
         print("wait....")
     rospy.loginfo("Intialize camera")
-    # frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
     # initialize video recording
-    fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
-    # out = cv2.VideoWriter('/home/vtol/record/'+datetime.now().strftime('%Y-%m-%d_%H:%M:%S') + '.avi', fourcc, ENCODED_FPS, (frame_width, frame_height))
-    # rospy.loginfo(f'Camera initialized, dimensions: {frame_width}x{frame_height}')
+    fourcc = cv2.VideoWriter_fourcc('m','p','4','v')
+    rospy.loginfo(r'Camera initialized')
 
 
     # initializing subscribers
@@ -157,30 +101,11 @@ if __name__ == "__main__":
         local_pose = data.pose
     rospy.Subscriber("/mavros/local_position/pose", PoseStamped, local_pose_cb)
 
-    drop_counter = Int32()
-    def drop_counter_cb(data):
-        global drop_counter
-        drop_counter = data
-    rospy.Subscriber("/gmfc/drop_counter", Int32, drop_counter_cb)
-
     cmd_vel = Vector3()
     def cmd_vel_cb(data):
         global cmd_vel
-        cmd_vel = data.velocity
-    rospy.Subscriber("/mavros/setpoint_raw/local", PositionTarget, cmd_vel_cb)
-    
-    is_dropping = 1
-    def is_dropping_cb(data):
-        global is_dropping
-        is_dropping = data.data
-    rospy.Subscriber("/gmfc/control/isDropping", Bool, is_dropping_cb)
-    
-    is_landing = 1
-    def is_landing_cb(data):
-        global is_landing
-        is_landing = data.data
-    rospy.Subscriber("/gmfc/control/isLanding", Bool, is_landing_cb)
-
+        cmd_vel = data.twist.linear
+    rospy.Subscriber("/mavros/setpoint_velocity/cmd_vel", TwistStamped, cmd_vel_cb)
 
     # initalize publisher
     rospy.loginfo("Initialize publisher...")
@@ -225,9 +150,8 @@ if __name__ == "__main__":
     centering_limit = 0
     centering_land_pub.publish(centering_limit)
 
-    drop_counter_pub = rospy.Publisher("/gmfc/drop_counter", Int32, queue_size=1)
-    drop_counter.data = 3
-    drop_counter_pub.publish(drop_counter)
+    drop_color_pub = rospy.Publisher("/gmfc/drop_color", Int32, queue_size=1)
+    drop_color = Int32()
 
     previous_time = 0
     frame_count = 0
@@ -235,50 +159,55 @@ if __name__ == "__main__":
     with imagezmq.ImageSender(connect_to=STREAMING_RECEIVER_IP, REQ_REP=False) as sender:
         while not rospy.is_shutdown():
             frame = img.copy()
+            drop_color = 0
+            
             mask = mask_img(frame)
-            ellipse = detect_max_ellipse(mask)
-            dropzone = get_dropzone(frame)
+            ellipse = detect_max_ellipse(mask)    
+            dropzone = get_dropzone(frame, 1)
 
-            if is_dropping:
-                centering_limit_drop = int(dropzone[3]/3) # from control.py
-                if dropzone[2]:
-                    dropzone_is_detected.data = True
-                    dropzone_is_detected_pub.publish(dropzone_is_detected)
-                    dropzone_target_x = dropzone[0]
-                    dropzone_target_x_pub.publish(dropzone_target_x)
-                    dropzone_target_y = dropzone[1]
-                    dropzone_target_y_pub.publish(dropzone_target_y)
-                    centering_drop_pub.publish(centering_limit_drop)
-                    cv2.polylines(frame, dropzone[2], True, (255,0,255),3)
-                    drawPlus(frame, dropzone_target_x, dropzone_target_y, 15, (0,0,255))
-                    drawPlus(frame, CENTER_X,CENTER_Y, 20, (255,0,0))       # plus in Copter's center
-                    cv2.circle(frame, (dropzone_target_x,dropzone_target_y), centering_limit_drop, (0,0,0))
+            if dropzone[2]:
+                dropzone_is_detected.data = True
+                dropzone_is_detected_pub.publish(dropzone_is_detected)
+                dropzone_target_x = dropzone[0]
+                dropzone_target_y = dropzone[1]
+                # centering_limit_drop = int(dropzone[3]/3) # from control.py
+                centering_limit_drop = CENTERING_LIMIT_DROP # from control.py
+                dropzone_target_x_pub.publish(dropzone_target_x)
+                dropzone_target_y_pub.publish(dropzone_target_y)
+                # centering_drop_pub.publish(centering_limit_drop)
+                delta_x = CENTER_X - dropzone_target_x
+                delta_y = CENTER_Y - dropzone_target_y
+                cv2.polylines(frame, dropzone[2], True, (255,0,255),3)
+                drawPlus(frame, dropzone_target_x, dropzone_target_y, 15, (0,0,255))
+                drawPlus(frame, CENTER_X, CENTER_Y, 20, (255,0,0))       # plus in Copter's center
+                cv2.circle(frame, (dropzone_target_x,dropzone_target_y), centering_limit_drop, (0,0,0))                    
 
-                else:
-                    dropzone_is_detected.data = False
-                    dropzone_is_detected_pub.publish(dropzone_is_detected)
+            else:
+                pass
+                dropzone_is_detected.data = False
+                dropzone_is_detected_pub.publish(dropzone_is_detected)
 
-            if is_landing:
-                if ellipse:
-                    elp_is_detected.data = True
-                    elp_is_detected_pub.publish(elp_is_detected)
-                    x, y, w, h, a = ellipse
-                    ellipse_half_width = int(w // 2)
-                    ellipse_half_height = int(h // 2)
-                    # centering_limit = int((ellipse_half_height + ellipse_half_width) / 4) # from control.py
-                    elp_target_x = x
-                    elp_target_x_pub.publish(elp_target_x)
-                    elp_target_y = y
-                    elp_target_y_pub.publish(elp_target_y)
-                    # centering_land_pub.publish(centering_limit)
-                    cv2.ellipse(frame, (x, y), (ellipse_half_width, ellipse_half_height), a, 0, 360, (0, 0, 255), 5)
-                    drawPlus(frame, elp_target_x, elp_target_y, 10, (0,0,0)) # plus in ELP
-                    drawPlus(frame, CENTER_X, CENTER_Y, 20, (255,0,0))       # plus in Copter's center
-                    cv2.circle(frame, (elp_target_x,elp_target_y), CENTERING_LIMIT, (0,0,0))
+            # if ellipse:
+            #     elp_is_detected.data = True
+            #     elp_is_detected_pub.publish(elp_is_detected)
+            #     x, y, w, h, a = ellipse
+            #     ellipse_half_width = int(w // 2)
+            #     ellipse_half_height = int(h // 2)
+            #     centering_limit = 120 # from control.py
+            #     elp_target_x = x
+            #     elp_target_y = y
+            #     elp_target_x_pub.publish(elp_target_x)
+            #     elp_target_y_pub.publish(elp_target_y)
+            #     # centering_land_pub.publish(centering_limit)
+            #     cv2.ellipse(frame, (x, y), (ellipse_half_width, ellipse_half_height), a, 0, 360, (0, 0, 255), 5)
+            #     drawPlus(frame, elp_target_x, elp_target_y, 10, (0,0,0)) # plus in ELP
+            #     drawPlus(frame, CENTER_X, CENTER_Y, 20, (255,0,0))       # plus in Copter's center
+            #     cv2.circle(frame, (elp_target_x,elp_target_y), centering_limit, (0,0,0))
 
-                else:
-                    elp_is_detected.data = False
-                    elp_is_detected_pub.publish(elp_is_detected)
+            # else:
+            #     pass
+            #     elp_is_detected.data = False
+            #     elp_is_detected_pub.publish(elp_is_detected)
 
             
             # calculate fps
@@ -292,6 +221,7 @@ if __name__ == "__main__":
 
             # on every frame
             # write other additional informations
+
             if fcu_state.connected:
                 cur_mode = fcu_state.mode
                 fcu_status_color = (0, 255, 0)
@@ -321,7 +251,7 @@ if __name__ == "__main__":
                         cv2.FONT_HERSHEY_SIMPLEX, 
                         0.5, 
                         fcu_status_color,
-                        2) 
+                        2)
             cv2.putText(frame,
                         'ALTITUDE: %.2f' % alt,
                         (10, 80),
@@ -350,47 +280,34 @@ if __name__ == "__main__":
                         0.5,
                         elp_status_color,
                         2)
-            cv2.putText(frame,
-                        f'PAYLOAD COUNT: {drop_counter.data}',
-                        (10, 160),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (0, 255, 0),
-                        2)
+           
             cv2.putText(frame,
                         f'WP: {wp_reached}',
-                        (10,180),
+                        (10,160),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.5,
                         (0,255,0),
                         2)
+            
             cv2.putText(frame,
                         f'FPS: {fps}',
-                        (10, 230),
+                        (10, 200),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         1,
                         (0, 255, 0),
                         2)
 
-            # if RECORD_PORT_EFFECT:
-            #     out.write(frame)
-
-            # rospy.loginfo_once('Live streaming started!')
-            # if LIVE_STREAMING:
-            #     jpg_buffer     = simplejpeg.encode_jpeg(frame, quality=JPEG_QUALITY,
-            #                                             colorspace='BGR')
-            #     sender.send_jpg(rpi_name, jpg_buffer)
+            if LIVE_STREAMING:
+                jpg_buffer     = simplejpeg.encode_jpeg(frame, quality=JPEG_QUALITY,
+                                                        colorspace='BGR')
+                sender.send_jpg(rpi_name, jpg_buffer)
 
             cv2.imshow("Result", frame)
-            if cv2.waitKey(1) & 0xff == 27:
+            if cv2.waitKey(10) & 0xff == 27:
                 break
-            try:
-                rate.sleep()
-            except:
-                rospy.logwarn('rate.sleep() interrupted by shutdown.') 
-                rospy.loginfo('Shutting down elp_detection.py...')
+            
+            rate.sleep()
 
-    rospy.loginfo('Releasing resources...')
-    cap.release()
-    # out.release()
-    rospy.loginfo('target_detection.py is shut down')
+        rospy.loginfo('Releasing resources...')
+        cap.release()
+        rospy.loginfo('target_detection.py is shut down')
